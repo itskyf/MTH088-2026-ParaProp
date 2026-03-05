@@ -1,0 +1,30 @@
+[project]
+name = "paraprop"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+authors = [{ name = "Kỳ" }]
+dependencies = [
+  "accelerate~=1.12",
+  "hydra-zen~=0.16",
+  "torch~=2.10",
+  "torchmetrics~=1.8",
+  "torchvision~=0.25",
+  "tqdm~=4.67",
+  "trackio[apple-gpu]~=0.18",
+]
+dynamic = ["version"]
+
+[dependency-groups]
+dev = [
+  "ipykernel>=7.2.0",
+  "ipywidgets>=8.1.8",
+]
+
+[build-system]
+requires = ["hatch-vcs", "hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
+fallback-version = "0.0.0"

@@ -1,0 +1,22 @@
+[tools]
+bun = "latest"
+prek = { version = "latest", postinstall = "prek install" }
+uv = "latest"
+
+[tasks.train]
+run = "uv run python -m paraprop.train"
+
+[tasks.repomix]
+sources = ["src/paraprop/*.py"]
+outputs = ["outputs/repomix-output.xml"]
+run = "bunx repomix --token-count-tree --include 'src/paraprop/*.py' --output outputs/repomix-output.xml"
+
+[tasks."repomix:copy"]
+depends = ["repomix"]
+run = "pbcopy < outputs/repomix-output.xml"
+
+[tasks."trackio:show"]
+run = "uv run trackio show --project $(uv tree --depth 0)"
+
+[settings]
+experimental = true

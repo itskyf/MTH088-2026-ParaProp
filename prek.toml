@@ -1,0 +1,68 @@
+exclude = { glob = "**/{.agent,.qwen}/skills/**" }
+
+[[repos]]
+repo = "https://github.com/astral-sh/uv-pre-commit"
+rev = "0.10.8"
+hooks = [{ id = "uv-lock" }]
+
+[[repos]]
+repo = "https://github.com/biomejs/pre-commit"
+rev = "v2.4.5"
+hooks = [{ id = "biome-check" }]
+
+[[repos]]
+repo = "https://github.com/scop/pre-commit-shfmt"
+rev = "v3.12.0-2"
+hooks = [{ id = "shfmt" }]
+
+[[repos]]
+repo = "https://github.com/koalaman/shellcheck-precommit"
+rev = "v0.11.0"
+hooks = [{ id = "shellcheck" }]
+
+[[repos]]
+repo = "https://github.com/tombi-toml/tombi-pre-commit"
+rev = "v0.9.0"
+hooks = [
+  { id = "tombi-format" },
+  { id = "tombi-lint" },
+]
+
+[[repos]]
+repo = "https://github.com/astral-sh/ruff-pre-commit"
+rev = "v0.15.4"
+hooks = [
+  { id = "ruff-check" },
+  { id = "ruff-format" },
+]
+
+[[repos]]
+repo = "https://github.com/PyCQA/docformatter"
+rev = "v1.7.7"
+hooks = [{ id = "docformatter", args = ["-i", "--style=google"] }]
+
+[[repos]]
+repo = "https://github.com/srstevenson/nb-clean"
+rev = "4.0.1"
+hooks = [{ id = "nb-clean" }]
+
+[[repos]]
+repo = "https://github.com/rvben/rumdl-pre-commit"
+rev = "v0.1.40"
+hooks = [
+  { id = "rumdl" },
+  { id = "rumdl-fmt" },
+]
+
+[[repos]]
+repo = "https://github.com/crate-ci/typos"
+rev = "v1.44.0"
+hooks = [{ id = "typos", args = [] }]
+
+[[repos]]
+repo = "https://github.com/concur1/sqruff-pre-commit"
+rev = "v0.35.0"
+hooks = [
+  { id = "sqruff-fix" },
+  { id = "sqruff-lint" },
+]
