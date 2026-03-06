@@ -1,6 +1,5 @@
 from typing import Final
 
-from hydra_zen.typing import Partial
 from torch import Tensor, nn
 
 
@@ -30,7 +29,6 @@ class ParaConv(nn.Module):
         *,
         in_channels: int,
         num_classes: int,
-        activation_fn: Partial[nn.Module],
         base_channels: int = 16,
     ) -> None:
         super().__init__()
@@ -38,7 +36,7 @@ class ParaConv(nn.Module):
         self.num_classes: Final[int] = num_classes
 
         # Shared activation (no parameters)
-        self.activation = activation_fn()
+        self.activation = nn.ReLU(inplace=False)
 
         # Channel widths per stage; base_channels controls overall model size
         c1 = base_channels

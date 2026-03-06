@@ -4,7 +4,10 @@ prek = { version = "latest", postinstall = "prek install" }
 uv = "latest"
 
 [tasks.train]
-run = "uv run python -m paraprop.train"
+usage = '''
+arg "<root>"
+'''
+run = "uv run python -m paraprop.train root=${usage_root?}"
 
 [tasks.repomix]
 sources = ["src/paraprop/*.py"]

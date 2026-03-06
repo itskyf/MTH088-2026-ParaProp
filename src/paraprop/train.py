@@ -25,17 +25,18 @@ from paraprop.typing import tqdm
 
 
 def get_run_name(
-    activation_fn: Partial[nn.Module], optimizer_fn: Partial[optim.Optimizer]
+    optimizer_fn: Partial[optim.Optimizer],
+    max_grad_norm: float | None,
 ) -> str:
-    activation_name = activation_fn.func.__name__
-    optimizer_name = optimizer_fn.func.__name__
-    return f"activation:{activation_name},optimizer:{optimizer_name}"
+    optimizer_name = f"optimizer:{optimizer_fn.func.__name__}"
+    grad_clip_str = f"grad_clip:{max_grad_norm or 'off'}"
+    return "-".join([optimizer_name, grad_clip_str])
 
 
 def train_and_eval(
     # Experiment setup
-    activation_fn: Partial[nn.Module],
     optimizer_fn: Partial[optim.Optimizer],
+    max_grad_norm: float | None,
     num_epochs: int,
     seed: int,
     # CLI positional
@@ -45,6 +46,8 @@ def train_and_eval(
     initial_train_batch_size: int = 1024,
     num_workers: int = 0,
 ):
+    set_seed(seed)
+
     accelerator = Accelerator(
         dynamo_plugin=TorchDynamoPlugin(
             backend=DynamoBackend.INDUCTOR, mode="max-autotune"
@@ -58,10 +61,13 @@ def train_and_eval(
     )
     accelerator.init_trackers(
         project_name=paraprop.__name__,
-        config={"seed": seed, "num_epochs": num_epochs},
+        config={"seed": seed, "max_grad_norm": max_grad_norm, "num_epochs": num_epochs},
         init_kwargs={
             LoggerType.TRACKIO.value: {
-                "name": get_run_name(activation_fn, optimizer_fn)
+                "name": get_run_name(
+                    optimizer_fn=optimizer_fn, max_grad_norm=max_grad_norm
+                ),
+                "resume": "allow",
             }
         },
     )
@@ -85,9 +91,7 @@ def train_and_eval(
         accelerator.free_memory()
         set_seed(seed)
 
-        model = ParaConv(
-            in_channels=1, num_classes=num_classes, activation_fn=activation_fn
-        )
+        model = ParaConv(in_channels=1, num_classes=num_classes)
         loss_fn = nn.CrossEntropyLoss()
         optimizer = optimizer_fn(params=model.parameters())
         train_loader = DataLoader(
@@ -112,6 +116,7 @@ def train_and_eval(
                 optimizer=optimizer,
                 metrics=metrics.train,
                 train_loss_metric=metrics.train_loss,
+                max_grad_norm=max_grad_norm,
             )
             accelerator.log(
                 {
@@ -140,7 +145,7 @@ def train_and_eval(
                 trackio_tracker.store_init_configuration(
                     {
                         "train/batch_size": train_batch_size,
-                        "eval/batch_size": eval_batch_size_mutable[0],
+                        "val/batch_size": eval_batch_size_mutable[0],
                     }
                 )
                 is_batch_size_saved = True
@@ -151,39 +156,21 @@ def train_and_eval(
     accelerator.end_training()
 
 
-activation_store = store(group="activation_fn")
-activation_store(nn.ReLU, zen_partial=True)
-activation_store(nn.SiLU, zen_partial=True)
-
 optim_store = store(group="optimizer_fn")
 optim_store(optim.SGD, zen_partial=True)
-
-# Prefer `builds(train_and_eval, ...)` over `@store` decorator on train_and_eval
-# `@store` decorator hides the default origins (function signature vs store overrides).
-# also, hydra_defaults/group wiring is fragile and fails silently.
-# TrainConf = builds(
-#     train_and_eval,
-#     populate_full_signature=True,
-#     num_epochs=50,
-#     seed=28,
-#     hydra_defaults=[
-#         "_self_",
-#         {"activation_fn": nn.ReLU.__name__},
-#         {"optimizer_fn": optim.SGD.__name__},
-#     ],
-# )
 store(
     train_and_eval,
-    name=__name__,
-    populate_full_signature=True,
-    num_epochs=50,
+    name=train_and_eval.__name__,
+    num_epochs=30,
+    max_grad_norm=None,
     seed=28,
     hydra_defaults=[
         "_self_",
-        {"activation_fn": nn.ReLU.__name__},
         {"optimizer_fn": optim.SGD.__name__},
     ],
 )
 if __name__ == "__main__":
     store.add_to_hydra_store()
-    zen(train_and_eval).hydra_main(config_name=__name__, version_base=None)
+    zen(train_and_eval).hydra_main(
+        config_name=train_and_eval.__name__, version_base=None
+    )

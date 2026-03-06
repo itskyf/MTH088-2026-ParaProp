@@ -9,6 +9,7 @@ from torchmetrics.classification import (
 
 class Metrics(NamedTuple):
     train_loss: MeanMetric
+    # TODO grad_norm collection
     train: MetricCollection
     test: MetricCollection
 
@@ -21,5 +22,5 @@ def build_metrics(num_classes: int) -> Metrics:
         ),
         prefix="train/",
     )
-    test_metrics = train_metrics.clone(prefix="test/")
+    test_metrics = train_metrics.clone(prefix="val/")
     return Metrics(train_loss=MeanMetric(), train=train_metrics, test=test_metrics)

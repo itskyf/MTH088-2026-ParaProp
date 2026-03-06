@@ -62,6 +62,7 @@ def train_one_epoch(
     optimizer: optim.Optimizer,
     metrics: MetricCollection,
     train_loss_metric: MeanMetric,
+    max_grad_norm: float | None,
 ):
     model.train()
     # Ensure clean state (OOM safety)
@@ -75,6 +76,8 @@ def train_one_epoch(
         loss = loss_fn(logits, targets)
 
         accelerator.backward(loss)
+        if max_grad_norm and accelerator.sync_gradients:
+            accelerator.clip_grad_norm_(model.parameters(), max_grad_norm)
         optimizer.step()
 
         metrics.update(logits.detach(), targets)
