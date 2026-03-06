@@ -57,7 +57,7 @@ hooks = [
 [[repos]]
 repo = "https://github.com/crate-ci/typos"
 rev = "v1.44.0"
-hooks = [{ id = "typos", args = [] }]
+hooks = [{ id = "typos", args = ["--force-exclude"] }]
 
 [[repos]]
 repo = "https://github.com/concur1/sqruff-pre-commit"
