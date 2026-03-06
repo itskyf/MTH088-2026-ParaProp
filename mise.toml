@@ -14,7 +14,10 @@ depends = ["repomix"]
 run = "pbcopy < outputs/repomix-output.xml"
 
 [tasks."trackio:show"]
-run = "uv run trackio show --project $(uv tree --depth 0)"
+usage = '''
+flag "--mcp-server"
+'''
+run = "uv run trackio show --project $(uv tree --depth 0) ${usage_mcp_server:+--mcp-server}"
 
 [tasks.reproduce]
 run = '''
