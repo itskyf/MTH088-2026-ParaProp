@@ -3,11 +3,11 @@ bun = "latest"
 prek = { version = "latest", postinstall = "prek install" }
 uv = "latest"
 
-[tasks.train]
+[tasks.reproduce]
 usage = '''
 arg "<root>"
 '''
-run = "uv run python -m paraprop.train root=${usage_root?}"
+run = "uv run python -m paraprop.train --multirun root=${usage_root?} seed=42,3407,1337"
 
 [tasks.repomix]
 sources = ["src/paraprop/*.py"]

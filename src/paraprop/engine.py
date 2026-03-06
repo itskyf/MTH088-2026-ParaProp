@@ -60,12 +60,14 @@ def train_one_epoch(
     model: nn.Module,
     loss_fn: nn.Module,
     optimizer: optim.Optimizer,
+    grad_norm_metrics: MetricCollection,
     metrics: MetricCollection,
     train_loss_metric: MeanMetric,
-    max_grad_norm: float | None,
+    max_grad_norm: float,
 ) -> tuple[dict[str, torch.Tensor], torch.Tensor] | None:
     model.train()
     # Ensure clean state (OOM safety)
+    grad_norm_metrics.reset()
     metrics.reset()
     train_loss_metric.reset()
 
@@ -81,8 +83,9 @@ def train_one_epoch(
             return
 
         accelerator.backward(loss)
-        if max_grad_norm and accelerator.sync_gradients:
-            accelerator.clip_grad_norm_(model.parameters(), max_grad_norm)
+        if accelerator.sync_gradients:
+            grad_norm = accelerator.clip_grad_norm_(model.parameters(), max_grad_norm)
+            grad_norm_metrics.update(grad_norm)
         optimizer.step()
 
         metrics.update(logits.detach(), targets)
@@ -90,10 +93,12 @@ def train_one_epoch(
         # Update weighted loss metric to handle variable batch sizes correctly.
         train_loss_metric.update(loss.detach(), weight=batch_size)
 
+    grad_norm_results = grad_norm_metrics.compute()
     metrics_results = metrics.compute()
     train_loss = train_loss_metric.compute()
 
     # Free memory for next stage
+    grad_norm_metrics.reset()
     metrics.reset()
     train_loss_metric.reset()
-    return metrics_results, train_loss
+    return grad_norm_results, metrics_results, train_loss

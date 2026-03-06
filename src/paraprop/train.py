@@ -27,10 +27,12 @@ from paraprop.typing import tqdm
 def get_run_name(
     optimizer_fn: Partial[optim.Optimizer],
     max_grad_norm: float | None,
+    seed: int,
 ) -> str:
     optimizer_name = f"optimizer:{optimizer_fn.func.__name__}"
     grad_clip_str = f"grad_clip:{max_grad_norm or 'off'}"
-    return "-".join([optimizer_name, grad_clip_str])
+    seed_str = f"seed:{seed}"
+    return "-".join([optimizer_name, grad_clip_str, seed_str])
 
 
 def train_and_eval(
@@ -65,7 +67,7 @@ def train_and_eval(
         init_kwargs={
             LoggerType.TRACKIO.value: {
                 "name": get_run_name(
-                    optimizer_fn=optimizer_fn, max_grad_norm=max_grad_norm
+                    optimizer_fn=optimizer_fn, max_grad_norm=max_grad_norm, seed=seed
                 ),
                 "resume": "allow",
             }
@@ -78,6 +80,7 @@ def train_and_eval(
     metrics = build_metrics(num_classes)
     # Avoid accelerator.prepare() to prevent DDP sync conflicts.
     # TorchMetrics manages multi-GPU synchronization internally.
+    metrics.grad_norm.to(accelerator.device)
     metrics.train_loss.to(accelerator.device)
     metrics.train.to(accelerator.device)
     metrics.test.to(accelerator.device)
@@ -114,17 +117,19 @@ def train_and_eval(
                 model=model,
                 loss_fn=loss_fn,
                 optimizer=optimizer,
+                grad_norm_metrics=metrics.grad_norm,
                 metrics=metrics.train,
                 train_loss_metric=metrics.train_loss,
-                max_grad_norm=max_grad_norm,
+                max_grad_norm=max_grad_norm or float("inf"),
             )
             if epoch_results is None:
                 accelerator.log({"failure": True})
                 break
-            metrics_results, train_loss = epoch_results
+            grad_norm_results, metrics_results, train_loss = epoch_results
             accelerator.log(
                 {
                     "train/loss": train_loss.item(),
+                    **{name: value.item() for name, value in grad_norm_results.items()},
                     **{name: value.item() for name, value in metrics_results.items()},
                 }
             )

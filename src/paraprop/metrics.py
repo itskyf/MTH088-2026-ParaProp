@@ -1,15 +1,12 @@
 from typing import NamedTuple
 
-from torchmetrics import MeanMetric, MetricCollection
-from torchmetrics.classification import (
-    MulticlassAccuracy,
-    MulticlassF1Score,
-)
+from torchmetrics import MaxMetric, MeanMetric, MetricCollection
+from torchmetrics.classification import MulticlassAccuracy, MulticlassF1Score
 
 
 class Metrics(NamedTuple):
+    grad_norm: MetricCollection
     train_loss: MeanMetric
-    # TODO grad_norm collection
     train: MetricCollection
     test: MetricCollection
 
@@ -22,5 +19,11 @@ def build_metrics(num_classes: int) -> Metrics:
         ),
         prefix="train/",
     )
+    grad_norm = MetricCollection([MeanMetric(), MaxMetric()], prefix="train/grad_norm/")
     test_metrics = train_metrics.clone(prefix="val/")
-    return Metrics(train_loss=MeanMetric(), train=train_metrics, test=test_metrics)
+    return Metrics(
+        grad_norm=grad_norm,
+        train_loss=MeanMetric(),
+        train=train_metrics,
+        test=test_metrics,
+    )

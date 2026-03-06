@@ -1,1 +1,3 @@
-# QuickProp: Mathematics for Artificial Intelligence Midterm
+# QuickProp: Mathematics for Artificial Intelligence - Midterm
+
+## Experiment Setup
