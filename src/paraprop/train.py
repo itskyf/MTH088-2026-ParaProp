@@ -108,7 +108,7 @@ def train_and_eval(
         )
 
         for _ in tqdm(range(num_epochs)):
-            metrics_results, train_loss = train_one_epoch(
+            epoch_results = train_one_epoch(
                 accelerator=accelerator,
                 dataloader=train_loader,
                 model=model,
@@ -118,6 +118,10 @@ def train_and_eval(
                 train_loss_metric=metrics.train_loss,
                 max_grad_norm=max_grad_norm,
             )
+            if epoch_results is None:
+                accelerator.log({"failure": True})
+                break
+            metrics_results, train_loss = epoch_results
             accelerator.log(
                 {
                     "train/loss": train_loss.item(),

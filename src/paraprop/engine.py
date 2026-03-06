@@ -63,7 +63,7 @@ def train_one_epoch(
     metrics: MetricCollection,
     train_loss_metric: MeanMetric,
     max_grad_norm: float | None,
-):
+) -> tuple[dict[str, torch.Tensor], torch.Tensor] | None:
     model.train()
     # Ensure clean state (OOM safety)
     metrics.reset()
@@ -74,6 +74,11 @@ def train_one_epoch(
 
         logits = model(inputs)
         loss = loss_fn(logits, targets)
+        if torch.isnan(loss) or torch.isinf(loss):
+            # Divergence check
+            metrics.reset()
+            train_loss_metric.reset()
+            return
 
         accelerator.backward(loss)
         if max_grad_norm and accelerator.sync_gradients:
