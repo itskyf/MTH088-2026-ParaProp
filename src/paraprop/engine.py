@@ -78,6 +78,7 @@ def train_one_epoch(
         loss = loss_fn(logits, targets)
         if torch.isnan(loss) or torch.isinf(loss):
             # Divergence check
+            grad_norm_metrics.reset()
             metrics.reset()
             train_loss_metric.reset()
             return

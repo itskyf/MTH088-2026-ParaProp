@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import torch
 from accelerate import Accelerator
 from accelerate.tracking import TrackioTracker
 from accelerate.utils import (
@@ -53,7 +54,9 @@ def train_and_eval(
     accelerator = Accelerator(
         dynamo_plugin=TorchDynamoPlugin(
             backend=DynamoBackend.INDUCTOR, mode="max-autotune"
-        ),
+        )
+        if not torch.backends.mps.is_available()
+        else None,
         log_with=[LoggerType.TRACKIO],
         project_config=ProjectConfiguration(
             project_dir=HydraConfig.get().runtime.output_dir,

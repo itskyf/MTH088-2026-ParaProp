@@ -66,14 +66,9 @@ class ParaConv(nn.Module):
         self._init_weights()
 
     def _init_weights(self) -> None:
-        """Initializes Conv2d weights using Xavier normal and zeros biases.
-
-        Side Effects:
-            Modifies Conv2d weights and biases in-place.
-        """
         for module in self.modules():
             if isinstance(module, nn.Conv2d):
-                nn.init.xavier_normal_(module.weight)
+                nn.init.kaiming_normal_(module.weight, nonlinearity="relu")
                 if module.bias is not None:
                     nn.init.zeros_(module.bias)
 
