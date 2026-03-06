@@ -36,7 +36,7 @@ class ParaConv(nn.Module):
         self.num_classes: Final[int] = num_classes
 
         # Shared activation (no parameters)
-        self.activation = nn.ReLU(inplace=False)
+        self.activation = nn.SiLU(inplace=False)
 
         # Channel widths per stage; base_channels controls overall model size
         c1 = base_channels
@@ -68,7 +68,10 @@ class ParaConv(nn.Module):
     def _init_weights(self) -> None:
         for module in self.modules():
             if isinstance(module, nn.Conv2d):
-                nn.init.kaiming_normal_(module.weight, nonlinearity="relu")
+                if isinstance(self.activation, nn.ReLU):
+                    nn.init.kaiming_normal_(module.weight, nonlinearity="relu")
+                else:
+                    nn.init.xavier_normal_(module.weight)
                 if module.bias is not None:
                     nn.init.zeros_(module.bias)
 

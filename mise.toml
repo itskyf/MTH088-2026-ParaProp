@@ -1,13 +1,8 @@
 [tools]
 bun = "latest"
 prek = { version = "latest", postinstall = "prek install" }
+typst = "latest"
 uv = "latest"
-
-[tasks.reproduce]
-usage = '''
-arg "<root>"
-'''
-run = "uv run python -m paraprop.train --multirun root=${usage_root?} seed=42,3407,1337"
 
 [tasks.repomix]
 sources = ["src/paraprop/*.py"]
@@ -20,6 +15,54 @@ run = "pbcopy < outputs/repomix-output.xml"
 
 [tasks."trackio:show"]
 run = "uv run trackio show --project $(uv tree --depth 0)"
+
+[tasks.reproduce]
+run = '''
+# 1) FULL-BATCH (FAIR, paper-style for QuickProp)
+# - QuickProp full-batch: epsilon=0.03, mu=1.75 (typical), mild weight_decay.
+uv run -m paraprop.train --multirun root=./data \
+  seed=42,3407,1337 \
+  optimizer_fn=QuickProp \
+  use_minibatch=False \
+  max_grad_norm=null \
+  num_epochs=150 \
+  optimizer_fn.lr=0.03 \
+  optimizer_fn.mu=1.75 \
+  optimizer_fn.weight_decay=1e-4
+
+# - SGD full-batch: use conservative lr=0.03 (no scheduler), momentum=0.9.
+uv run -m paraprop.train --multirun root=./data \
+  seed=42,3407,1337 \
+  optimizer_fn=SGD \
+  use_minibatch=False \
+  max_grad_norm=null \
+  num_epochs=150 \
+  optimizer_fn.lr=0.03 \
+  optimizer_fn.momentum=0.9
+
+
+# 2) MINI-BATCH (MODERN REGIME)
+# - SGD mini-batch: canonical lr=0.1 with momentum; keep clipping on for stability.
+uv run -m paraprop.train --multirun root=./data \
+  seed=42,3407,1337 \
+  optimizer_fn=SGD \
+  use_minibatch=True \
+  max_grad_norm=1.0 \
+  num_epochs=30 \
+  optimizer_fn.lr=0.1 \
+  optimizer_fn.momentum=0.9
+
+# - QuickProp mini-batch: smaller epsilon due to noisy slopes; keep same clipping for fairness.
+uv run -m paraprop.train --multirun root=./data \
+  seed=42,3407,1337 \
+  optimizer_fn=QuickProp \
+  use_minibatch=True \
+  max_grad_norm=1.0 \
+  num_epochs=30 \
+  optimizer_fn.lr=0.01 \
+  optimizer_fn.mu=1.75 \
+  optimizer_fn.weight_decay=1e-4
+'''
 
 [settings]
 experimental = true

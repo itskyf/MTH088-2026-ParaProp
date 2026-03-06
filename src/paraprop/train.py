@@ -19,21 +19,29 @@ from torch.utils.data import DataLoader
 
 import paraprop
 from paraprop.datasets import build_datasets
-from paraprop.engine import evaluate, train_one_epoch
+from paraprop.engine import (
+    evaluate,
+    train_one_epoch_fullbatch,
+    train_one_epoch_minibatch,
+)
 from paraprop.metrics import build_metrics
 from paraprop.models import ParaConv
+from paraprop.optim import QuickProp
 from paraprop.typing import tqdm
 
 
 def get_run_name(
     optimizer_fn: Partial[optim.Optimizer],
+    use_minibatch: bool,
     max_grad_norm: float | None,
     seed: int,
 ) -> str:
     optimizer_name = f"optimizer:{optimizer_fn.func.__name__}"
+    minibatch_str = f"minibatch:{use_minibatch}"
     grad_clip_str = f"grad_clip:{max_grad_norm or 'off'}"
     seed_str = f"seed:{seed}"
-    return "-".join([optimizer_name, grad_clip_str, seed_str])
+    lr_str = f"lr:{optimizer_fn.keywords['lr']}"
+    return "-".join([optimizer_name, minibatch_str, grad_clip_str, seed_str, lr_str])
 
 
 def train_and_eval(
@@ -42,6 +50,7 @@ def train_and_eval(
     max_grad_norm: float | None,
     num_epochs: int,
     seed: int,
+    use_minibatch: bool,
     # CLI positional
     root: Path,
     # CLI optional
@@ -70,9 +79,11 @@ def train_and_eval(
         init_kwargs={
             LoggerType.TRACKIO.value: {
                 "name": get_run_name(
-                    optimizer_fn=optimizer_fn, max_grad_norm=max_grad_norm, seed=seed
+                    optimizer_fn=optimizer_fn,
+                    use_minibatch=use_minibatch,
+                    max_grad_norm=max_grad_norm,
+                    seed=seed,
                 ),
-                "resume": "allow",
             }
         },
     )
@@ -113,8 +124,11 @@ def train_and_eval(
             model, optimizer, train_loader
         )
 
+        train_fn = (
+            train_one_epoch_minibatch if use_minibatch else train_one_epoch_fullbatch
+        )
         for _ in tqdm(range(num_epochs)):
-            epoch_results = train_one_epoch(
+            epoch_results = train_fn(
                 accelerator=accelerator,
                 dataloader=train_loader,
                 model=model,
@@ -129,13 +143,6 @@ def train_and_eval(
                 accelerator.log({"failure": True})
                 break
             grad_norm_results, metrics_results, train_loss = epoch_results
-            accelerator.log(
-                {
-                    "train/loss": train_loss.item(),
-                    **{name: value.item() for name, value in grad_norm_results.items()},
-                    **{name: value.item() for name, value in metrics_results.items()},
-                }
-            )
 
             eval_results, eval_batch_size = evaluate(
                 starting_eval_batch_size=eval_batch_size_mutable[0],
@@ -146,7 +153,12 @@ def train_and_eval(
                 num_workers=num_workers,
             )
             accelerator.log(
-                {name: value.item() for name, value in eval_results.items()}
+                {
+                    "train/loss": train_loss.item(),
+                    **{name: value.item() for name, value in grad_norm_results.items()},
+                    **{name: value.item() for name, value in metrics_results.items()},
+                    **{name: value.item() for name, value in eval_results.items()},
+                }
             )
             eval_batch_size_mutable[0] = eval_batch_size
 
@@ -170,6 +182,7 @@ def train_and_eval(
 
 optim_store = store(group="optimizer_fn")
 optim_store(optim.SGD, zen_partial=True)
+optim_store(QuickProp, zen_partial=True)
 store(
     train_and_eval,
     name=train_and_eval.__name__,

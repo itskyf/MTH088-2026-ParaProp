@@ -22,6 +22,21 @@ backend = "aqua:j178/prek"
 "platforms.macos-x64" = { checksum = "sha256:60a8d093012bcd40e8fec348450d75d8f5b09d85529f11fc5d606b84273b7978", url = "https://github.com/j178/prek/releases/download/v0.3.4/prek-x86_64-apple-darwin.tar.gz"}
 "platforms.windows-x64" = { checksum = "sha256:21c6e119d58443a696bd585946a6fac8fa0b918a2d975f623157c3f72994a2f3", url = "https://github.com/j178/prek/releases/download/v0.3.4/prek-x86_64-pc-windows-msvc.zip"}
 
+[[tools.typst]]
+version = "0.14.2"
+backend = "aqua:typst/typst"
+"platforms.linux-arm64" = { checksum = "sha256:491b101aa40a3a7ea82a3f8a6232cabb4e6a7e233810082e5ac812d43fdcd47a", url = "https://github.com/typst/typst/releases/download/v0.14.2/typst-aarch64-unknown-linux-musl.tar.xz"}
+"platforms.linux-arm64-musl" = { checksum = "sha256:491b101aa40a3a7ea82a3f8a6232cabb4e6a7e233810082e5ac812d43fdcd47a", url = "https://github.com/typst/typst/releases/download/v0.14.2/typst-aarch64-unknown-linux-musl.tar.xz"}
+"platforms.linux-x64" = { checksum = "sha256:a6044cbad2a954deb921167e257e120ac0a16b20339ec01121194ff9d394996d", url = "https://github.com/typst/typst/releases/download/v0.14.2/typst-x86_64-unknown-linux-musl.tar.xz"}
+"platforms.linux-x64-baseline" = { checksum = "sha256:a6044cbad2a954deb921167e257e120ac0a16b20339ec01121194ff9d394996d", url = "https://github.com/typst/typst/releases/download/v0.14.2/typst-x86_64-unknown-linux-musl.tar.xz"}
+"platforms.linux-x64-musl" = { checksum = "sha256:a6044cbad2a954deb921167e257e120ac0a16b20339ec01121194ff9d394996d", url = "https://github.com/typst/typst/releases/download/v0.14.2/typst-x86_64-unknown-linux-musl.tar.xz"}
+"platforms.linux-x64-musl-baseline" = { checksum = "sha256:a6044cbad2a954deb921167e257e120ac0a16b20339ec01121194ff9d394996d", url = "https://github.com/typst/typst/releases/download/v0.14.2/typst-x86_64-unknown-linux-musl.tar.xz"}
+"platforms.macos-arm64" = { checksum = "sha256:470aa49a2298d20b65c119a10e4ff8808550453e0cb4d85625b89caf0cedf048", url = "https://github.com/typst/typst/releases/download/v0.14.2/typst-aarch64-apple-darwin.tar.xz"}
+"platforms.macos-x64" = { checksum = "sha256:4e91d8e1e33ab164f949c5762e01ee3faa585c8615a2a6bd5e3677fa8506b249", url = "https://github.com/typst/typst/releases/download/v0.14.2/typst-x86_64-apple-darwin.tar.xz"}
+"platforms.macos-x64-baseline" = { checksum = "sha256:4e91d8e1e33ab164f949c5762e01ee3faa585c8615a2a6bd5e3677fa8506b249", url = "https://github.com/typst/typst/releases/download/v0.14.2/typst-x86_64-apple-darwin.tar.xz"}
+"platforms.windows-x64" = { checksum = "sha256:51353994ac83218c3497052e89b2c432c53b9d4439cdc1b361e2ea4798ebfc13", url = "https://github.com/typst/typst/releases/download/v0.14.2/typst-x86_64-pc-windows-msvc.zip"}
+"platforms.windows-x64-baseline" = { checksum = "sha256:51353994ac83218c3497052e89b2c432c53b9d4439cdc1b361e2ea4798ebfc13", url = "https://github.com/typst/typst/releases/download/v0.14.2/typst-x86_64-pc-windows-msvc.zip"}
+
 [[tools.uv]]
 version = "0.10.8"
 backend = "aqua:astral-sh/uv"
